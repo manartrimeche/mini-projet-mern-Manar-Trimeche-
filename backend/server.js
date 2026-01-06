@@ -56,7 +56,6 @@ const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const aiRoutes = require('./routes/aiRoutes');
-const quizRoutes = require('./routes/quizRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 
@@ -67,9 +66,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/ai', aiRoutes);
-app.use('/api/quiz', quizRoutes);
-// app.use('/api/profile', profileRoutes);
-// app.use('/api/tasks', taskRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/tasks', taskRoutes);
 
 // Route 404
 app.use((req, res) => {

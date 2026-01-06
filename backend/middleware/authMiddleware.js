@@ -13,8 +13,9 @@ const protect = (req, res, next) => {
       // Vérifier le token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Ajouter l'ID utilisateur à la requête
+      // Ajouter l'ID utilisateur à la requête (compatible avec les deux formats)
       req.userId = decoded.userId;
+      req.user = { id: decoded.userId };
 
       next();
     } catch (error) {

@@ -15,7 +15,7 @@ exports.generatePersonalizedRecommendations = async (skinProfile, hairProfile) =
       throw new Error('GEMINI_API_KEY non configurée');
     }
 
-    const prompt = `Tu es un expert en cosmétiques et soins personnalisés. Analyse ce profil client et génère des recommandations.
+    const prompt = `Tu es un expert en cosmétiques et soins personnalisés. Analyse ce profil client et génère des recommandations TRÈS SPÉCIFIQUES.
 
 **Profil de peau:**
 - Type: ${skinProfile.skinType}
@@ -36,9 +36,9 @@ Retourne UNIQUEMENT un JSON valide avec cette structure:
   "hairRoutine": ["étape 1", "étape 2", "étape 3"],
   "recommendedTasks": [
     {
-      "title": "Titre court",
-      "description": "Description claire",
-      "category": "skincare|haircare|routine",
+      "title": "Titre court et SPÉCIFIQUE au profil",
+      "description": "Description TRÈS DÉTAILLÉE mentionnant le type de peau/cheveux et les préoccupations exactes",
+      "category": "skincare|haircare|routine|shopping|review",
       "icon": "emoji",
       "points": 20
     }
@@ -46,12 +46,19 @@ Retourne UNIQUEMENT un JSON valide avec cette structure:
   "tips": ["conseil 1", "conseil 2", "conseil 3"]
 }
 
-Règles:
-- skinRoutine: 3-5 étapes (nettoyage, soin, protection)
-- hairRoutine: 3-4 étapes (lavage, soin, coiffage)
-- recommendedTasks: 5 tâches personnalisées et réalisables
-- tips: 3-5 conseils pratiques adaptés au profil`;
+Règles IMPORTANTES:
+- skinRoutine: 3-5 étapes personnalisées selon le type de peau "${skinProfile.skinType}" et préoccupations "${skinProfile.skinConcerns.join(', ')}"
+- hairRoutine: 3-4 étapes personnalisées selon le type de cheveux "${hairProfile.hairType}" et préoccupations "${hairProfile.hairConcerns.join(', ')}"
+- recommendedTasks: 6-8 tâches TRÈS SPÉCIFIQUES basées sur:
+  * Les préoccupations exactes (${skinProfile.skinConcerns.join(', ')}, ${hairProfile.hairConcerns.join(', ')})
+  * Les objectifs (${skinProfile.skinGoals.join(', ')}, ${hairProfile.hairGoals.join(', ')})
+  * Le type de peau/cheveux
+  * Exemples: "Appliquer un sérum hydratant pour peau ${skinProfile.skinType}", "Utiliser un masque pour ${hairProfile.hairConcerns[0] || 'cheveux'}"
+- tips: 4-6 conseils ULTRA SPÉCIFIQUES au profil, pas génériques
+- ÉVITER les tâches génériques comme "Testez un nouveau produit"
+- category valides: skincare, haircare, routine, shopping, review, social`;
 
+    console.log('🤖 Appel API Gemini...');
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
@@ -62,66 +69,81 @@ Règles:
     }
 
     const recommendations = JSON.parse(jsonMatch[0]);
+    console.log('✅ Recommandations IA générées avec succès');
     return recommendations;
   } catch (error) {
-    console.error('❌ Erreur génération recommandations:', error.message);
+    console.error('❌ Erreur génération recommandations (utilisation du fallback):', error.message);
+    console.log('📋 Utilisation des tâches personnalisées par défaut...');
     
-    // Retourner des recommandations par défaut en cas d'erreur
+    // Retourner des recommandations personnalisées par défaut basées sur le profil
+    const skinType = skinProfile.skinType || 'normale';
+    const mainSkinConcern = skinProfile.skinConcerns[0] || 'hydratation';
+    const mainHairConcern = hairProfile.hairConcerns[0] || 'hydratation';
+    const hairType = hairProfile.hairType || 'normaux';
+    
     return {
       skinRoutine: [
-        'Nettoyez votre visage matin et soir',
-        'Appliquez un sérum adapté à vos besoins',
-        'Hydratez avec une crème adaptée',
-        'Protégez avec un SPF le matin'
+        `Nettoyez votre peau ${skinType} avec un nettoyant doux matin et soir`,
+        `Appliquez un sérum ciblant ${mainSkinConcern}`,
+        `Hydratez avec une crème adaptée aux peaux ${skinType}`,
+        'Protégez avec un SPF 30+ chaque matin'
       ],
       hairRoutine: [
-        'Lavez vos cheveux 2-3 fois par semaine',
-        'Utilisez un après-shampoing',
-        'Appliquez un masque hebdomadaire',
-        'Protégez vos cheveux de la chaleur'
+        `Lavez vos cheveux ${hairType} 2-3 fois par semaine`,
+        `Utilisez un après-shampoing pour traiter ${mainHairConcern}`,
+        `Appliquez un masque hebdomadaire ciblant ${mainHairConcern}`,
+        'Protégez vos cheveux de la chaleur avec un spray thermoprotecteur'
       ],
       recommendedTasks: [
         {
-          title: 'Complétez votre routine matinale',
-          description: 'Suivez les 4 étapes de votre routine de soin',
+          title: `Routine matinale pour peau ${skinType}`,
+          description: `Nettoyez, tonifiez et hydratez votre peau ${skinType}. N'oubliez pas le SPF pour protéger contre les UV et prévenir ${mainSkinConcern}`,
           category: 'skincare',
           icon: '☀️',
           points: 20
         },
         {
-          title: 'Testez un nouveau produit',
-          description: 'Explorez notre catalogue et trouvez votre produit idéal',
-          category: 'shopping',
-          icon: '🛍️',
-          points: 15
-        },
-        {
-          title: 'Partagez votre avis',
-          description: 'Laissez un avis sur un produit que vous avez essayé',
-          category: 'review',
-          icon: '⭐',
+          title: `Soin spécifique pour ${mainSkinConcern}`,
+          description: `Appliquez un sérum ou un traitement ciblé pour traiter ${mainSkinConcern} sur votre peau ${skinType}`,
+          category: 'skincare',
+          icon: '✨',
           points: 25
         },
         {
-          title: 'Soignez vos cheveux',
-          description: 'Appliquez un masque capillaire nourrissant',
+          title: `Masque capillaire pour ${mainHairConcern}`,
+          description: `Appliquez un masque nourrissant sur vos cheveux ${hairType} pour traiter ${mainHairConcern}. Laissez poser 15-20 minutes`,
           category: 'haircare',
           icon: '💆',
           points: 20
         },
         {
-          title: 'Participez au quiz',
-          description: 'Testez vos connaissances et gagnez des points',
-          category: 'quiz',
-          icon: '🎮',
-          points: 30
+          title: `Soin du cuir chevelu ${hairProfile.scalpType}`,
+          description: `Massez votre cuir chevelu ${hairProfile.scalpType} pour stimuler la circulation et traiter ${mainHairConcern}`,
+          category: 'haircare',
+          icon: '💆‍♀️',
+          points: 15
+        },
+        {
+          title: `Trouvez des produits pour peau ${skinType}`,
+          description: `Explorez notre catalogue et découvrez des produits adaptés aux peaux ${skinType} avec préoccupation ${mainSkinConcern}`,
+          category: 'shopping',
+          icon: '🛍️',
+          points: 15
+        },
+        {
+          title: 'Partagez votre expérience',
+          description: 'Laissez un avis détaillé sur un produit que vous avez testé pour aider la communauté',
+          category: 'review',
+          icon: '⭐',
+          points: 25
         }
       ],
       tips: [
-        'Hydratez-vous en buvant au moins 1,5L d\'eau par jour',
-        'Dormez 7-8h par nuit pour une peau reposée',
-        'Évitez de toucher votre visage trop souvent',
-        'Changez votre taie d\'oreiller régulièrement'
+        `Pour votre peau ${skinType}: buvez au moins 1,5L d'eau par jour pour maintenir l'hydratation`,
+        `Contre ${mainSkinConcern}: dormez 7-8h par nuit pour permettre la régénération cellulaire`,
+        `Pour vos cheveux ${hairType}: évitez les lavages trop fréquents qui peuvent aggraver ${mainHairConcern}`,
+        'Changez votre taie d\'oreiller chaque semaine pour éviter les impuretés',
+        `Adaptez votre routine selon les saisons: votre peau ${skinType} peut avoir des besoins différents`
       ]
     };
   }

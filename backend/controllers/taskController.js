@@ -15,8 +15,7 @@ exports.getUserTasks = async (req, res) => {
 
     const tasks = await Task.find(filter)
       .sort({ status: 1, createdAt: -1 })
-      .populate('metadata.product', 'name images')
-      .populate('metadata.quiz', 'title');
+      .populate('metadata.productId', 'name images');
 
     // Statistiques
     const stats = {
@@ -41,8 +40,7 @@ exports.getTaskById = async (req, res) => {
       _id: req.params.id,
       user: req.user.id
     })
-      .populate('metadata.product', 'name images price')
-      .populate('metadata.quiz', 'title description');
+      .populate('metadata.productId', 'name images price');
 
     if (!task) {
       return res.status(404).json({ message: 'Tâche non trouvée' });

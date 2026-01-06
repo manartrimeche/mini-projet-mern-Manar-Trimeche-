@@ -26,7 +26,7 @@ const Navbar = () => {
       <div style={{ display: 'flex', gap: '1rem' }}>
         <Link to="/products" style={{ color: '#333', textDecoration: 'none' }}>Produits</Link>
         {isAuthenticated && (
-          <Link to="/missions" style={{ color: '#333', textDecoration: 'none' }}>🎯 Missions</Link>
+          <Link to="/missions" style={{ color: '#333', textDecoration: 'none' }}>Missions</Link>
         )}
         <Link to="/cart" style={{ color: '#333', textDecoration: 'none', position: 'relative', display: 'flex', alignItems: 'center' }}>
           <ShoppingCart size={20} />

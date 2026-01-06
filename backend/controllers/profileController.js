@@ -76,22 +76,25 @@ exports.completeOnboarding = async (req, res) => {
 
     await profile.save();
 
-    // Générer les tâches personnalisées
-    const tasksData = recommendations.recommendedTasks.map(task => ({
-      user: req.user.id,
-      type: 'onboarding',
-      category: task.category,
-      title: task.title,
-      description: task.description,
-      icon: task.icon || '✨',
-      rewards: {
-        points: task.points || 20
-      },
-      status: 'pending',
-      progress: { current: 0, target: 1 },
-      aiGenerated: true,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 jours
-    }));
+    // Générer les tâches personnalisées (filtrer les catégories invalides comme 'quiz')
+    const validCategories = ['skincare', 'haircare', 'routine', 'shopping', 'review', 'social'];
+    const tasksData = recommendations.recommendedTasks
+      .filter(task => validCategories.includes(task.category))
+      .map(task => ({
+        user: req.user.id,
+        type: 'onboarding',
+        category: task.category,
+        title: task.title,
+        description: task.description,
+        icon: task.icon || '✨',
+        rewards: {
+          points: task.points || 20
+        },
+        status: 'pending',
+        progress: { current: 0, target: 1 },
+        aiGenerated: true,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 jours
+      }));
 
     // Insérer les tâches
     const tasks = await Task.insertMany(tasksData);

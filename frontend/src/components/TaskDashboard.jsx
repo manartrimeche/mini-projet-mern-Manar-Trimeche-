@@ -232,7 +232,6 @@ function getCategoryLabel(category) {
     routine: '⏰ Routine',
     shopping: '🛍️ Shopping',
     review: '⭐ Avis',
-    quiz: '🎮 Quiz',
     social: '👥 Social'
   };
   return labels[category] || category;
@@ -305,7 +304,9 @@ const styles = {
   },
   filterButton: {
     padding: '10px 20px',
-    border: '2px solid #e5e7eb',
+    borderWidth: '2px',
+    borderStyle: 'solid',
+    borderColor: '#e5e7eb',
     borderRadius: '8px',
     backgroundColor: '#fff',
     cursor: 'pointer',

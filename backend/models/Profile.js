@@ -73,7 +73,7 @@ const profileSchema = new mongoose.Schema(
       }],
       hairGoals: [{
         type: String,
-        enum: ['hydratation', 'volume', 'brillance', 'fortification', 'croissance', 'lissage', 'définition-boucles', 'autre']
+        enum: ['hydratation', 'volume', 'brillance', 'fortification', 'réparation', 'croissance', 'lissage', 'définition-boucles', 'autre']
       }]
     },
 

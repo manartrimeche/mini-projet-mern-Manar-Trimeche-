@@ -5,7 +5,6 @@ import api from '../api/api';
 import { ShoppingCart, Star, ArrowLeft, Check, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import Quiz from '../components/Quiz';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -533,36 +532,6 @@ export default function ProductDetail() {
                 </p>
               </div>
             )}
-          </div>
-
-          {/* Quiz Gamification Section */}
-          <div style={{
-            background: '#f9fafb',
-            padding: '40px 20px',
-            borderTop: '1px solid #e5e7eb'
-          }}>
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <div style={{
-                textAlign: 'center',
-                marginBottom: '30px'
-              }}>
-                <h2 style={{
-                  fontSize: '28px',
-                  fontWeight: 800,
-                  color: '#111827',
-                  marginBottom: '8px'
-                }}>
-                  🎮 Testez vos connaissances!
-                </h2>
-                <p style={{
-                  color: '#6b7280',
-                  fontSize: '15px'
-                }}>
-                  Participez à un quiz intelligent et gagnez des points
-                </p>
-              </div>
-              <Quiz productId={id} />
-            </div>
           </div>
         </div>
       </div>

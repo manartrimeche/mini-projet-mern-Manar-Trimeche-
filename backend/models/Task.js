@@ -24,7 +24,7 @@ const taskSchema = new mongoose.Schema(
     // Catégorie
     category: {
       type: String,
-      enum: ['skincare', 'haircare', 'routine', 'shopping', 'review', 'quiz', 'social'],
+      enum: ['skincare', 'haircare', 'routine', 'shopping', 'review', 'social'],
       required: true
     },
 
@@ -106,10 +106,6 @@ const taskSchema = new mongoose.Schema(
       productId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product'
-      },
-      quizId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Quiz'
       },
       orderId: {
         type: mongoose.Schema.Types.ObjectId,
