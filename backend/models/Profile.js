@@ -111,6 +111,15 @@ const profileSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Task'
       }]
+    },
+
+    // Portefeuille - Points de réduction
+    wallet: {
+      discountPoints: {
+        type: Number,
+        default: 0,
+        description: 'Points de réduction utilisables au panier'
+      }
     }
   },
   { timestamps: true }

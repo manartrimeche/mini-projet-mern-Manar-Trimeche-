@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import api from '../api/api';
 
+// Formatage des labels avec hyphens vers espaces
+const formatLabel = (text) => {
+  return text
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 export default function OnboardingQuestionnaire({ onComplete }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -24,15 +32,15 @@ export default function OnboardingQuestionnaire({ onComplete }) {
 
   // Options pour les différents champs
   const skinTypes = ['grasse', 'sèche', 'mixte', 'normale', 'sensible'];
-  const skinConcerns = ['acné', 'rides', 'taches', 'rougeurs', 'pores dilatés', 'déshydratation', 'cicatrices', 'teint terne'];
-  const skinGoals = ['hydratation', 'anti-âge', 'éclaircissement', 'matité', 'éclat', 'réparation'];
+  const skinConcerns = ['acné', 'rides', 'taches', 'rougeurs', 'déshydratation', 'pores-dilatés', 'cicatrices', 'autre'];
+  const skinGoals = ['hydratation', 'anti-âge', 'éclaircissement', 'anti-acné', 'raffermissement', 'protection', 'autre'];
   const sensitivities = ['très-sensible', 'sensible', 'normale', 'résistante'];
 
   const hairTypes = ['raides', 'ondulés', 'bouclés', 'crépus'];
   const hairTextures = ['fins', 'normaux', 'épais'];
   const scalpTypes = ['gras', 'sec', 'normal', 'mixte', 'sensible'];
-  const hairConcerns = ['chute', 'pellicules', 'sécheresse', 'frisottis', 'casse', 'démangeaisons', 'manque de volume'];
-  const hairGoals = ['hydratation', 'volume', 'brillance', 'réparation', 'croissance', 'anti-chute'];
+  const hairConcerns = ['chute', 'pellicules', 'sécheresse', 'frisottis', 'casse', 'manque-de-volume', 'pointes-fourchues', 'autre'];
+  const hairGoals = ['hydratation', 'volume', 'brillance', 'fortification', 'réparation', 'croissance', 'lissage', 'définition-boucles', 'autre'];
 
   // Gérer sélection multiple
   const toggleArray = (array, item, setter) => {
@@ -135,7 +143,7 @@ export default function OnboardingQuestionnaire({ onComplete }) {
                       ...(skinProfile.skinConcerns.includes(concern) ? styles.checkboxButtonActive : {})
                     }}
                   >
-                    {concern.charAt(0).toUpperCase() + concern.slice(1)}
+                    {formatLabel(concern)}
                   </button>
                 ))}
               </div>
@@ -157,7 +165,7 @@ export default function OnboardingQuestionnaire({ onComplete }) {
                       ...(skinProfile.skinGoals.includes(goal) ? styles.checkboxButtonActive : {})
                     }}
                   >
-                    {goal.charAt(0).toUpperCase() + goal.slice(1)}
+                    {formatLabel(goal)}
                   </button>
                 ))}
               </div>
@@ -258,7 +266,7 @@ export default function OnboardingQuestionnaire({ onComplete }) {
                       ...(hairProfile.hairConcerns.includes(concern) ? styles.checkboxButtonActive : {})
                     }}
                   >
-                    {concern.charAt(0).toUpperCase() + concern.slice(1)}
+                    {formatLabel(concern)}
                   </button>
                 ))}
               </div>
@@ -280,7 +288,7 @@ export default function OnboardingQuestionnaire({ onComplete }) {
                       ...(hairProfile.hairGoals.includes(goal) ? styles.checkboxButtonActive : {})
                     }}
                   >
-                    {goal.charAt(0).toUpperCase() + goal.slice(1)}
+                    {formatLabel(goal)}
                   </button>
                 ))}
               </div>
@@ -418,7 +426,7 @@ const styles = {
   radioButtonActive: {
     backgroundColor: '#667eea',
     color: '#fff',
-    borderColor: '#667eea'
+    border: '2px solid #667eea'
   },
   checkboxGroup: {
     display: 'flex',
@@ -439,7 +447,7 @@ const styles = {
   checkboxButtonActive: {
     backgroundColor: '#764ba2',
     color: '#fff',
-    borderColor: '#764ba2'
+    border: '2px solid #764ba2'
   },
   error: {
     color: '#dc2626',

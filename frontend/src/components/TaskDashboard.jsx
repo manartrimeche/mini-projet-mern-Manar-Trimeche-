@@ -157,7 +157,7 @@ export default function TaskDashboard() {
                       {getTypeLabel(task.type)}
                     </span>
                     {task.aiGenerated && (
-                      <span style={styles.aiTag}>🤖 IA</span>
+                      <span style={styles.aiTag}>  IA</span>
                     )}
                   </div>
                 </div>
@@ -183,8 +183,8 @@ export default function TaskDashboard() {
               {/* Récompenses */}
               <div style={styles.rewards}>
                 <span style={styles.rewardBadge}>⭐ {task.rewards.points} points</span>
-                {task.rewards.bonus && (
-                  <span style={styles.rewardBadge}>🎁 Bonus: {task.rewards.bonus}</span>
+                {task.rewards.discountPoints && task.rewards.discountPoints > 0 && (
+                  <span style={styles.rewardBadge}>🛒 -{task.rewards.discountPoints} au panier</span>
                 )}
                 {task.rewards.badge && (
                   <span style={styles.rewardBadge}>{task.rewards.badge}</span>

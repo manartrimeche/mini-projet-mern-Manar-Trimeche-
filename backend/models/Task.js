@@ -54,9 +54,10 @@ const taskSchema = new mongoose.Schema(
         type: Number,
         default: 10
       },
-      bonus: {
-        type: String,
-        default: null
+      discountPoints: {
+        type: Number,
+        default: 0,
+        description: 'Points de réduction à utiliser au panier'
       },
       badge: {
         type: String,

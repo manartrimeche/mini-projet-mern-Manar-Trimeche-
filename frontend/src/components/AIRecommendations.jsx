@@ -45,7 +45,7 @@ const AIRecommendations = ({ preferences }) => {
         alignItems: 'center',
         gap: '8px'
       }}>
-        🤖 Recommandations IA pour vous
+          Recommandations IA pour vous
       </h2>
       
       <div style={{

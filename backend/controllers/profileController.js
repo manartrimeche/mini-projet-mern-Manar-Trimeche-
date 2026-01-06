@@ -1,6 +1,7 @@
 const Profile = require('../models/Profile');
 const Task = require('../models/Task');
 const { generatePersonalizedRecommendations } = require('../services/recommendationService');
+const aiService = require('../services/aiService');
 
 /**
  * Récupère le profil de l'utilisateur connecté
@@ -65,8 +66,9 @@ exports.completeOnboarding = async (req, res) => {
     }
 
     // Générer recommandations IA
-    console.log('🤖 Génération des recommandations IA...');
+    console.log('  Génération des recommandations IA pour profil:', { skinType: skinProfile.skinType, hairType: hairProfile.hairType });
     const recommendations = await generatePersonalizedRecommendations(skinProfile, hairProfile);
+    console.log('✅ Recommandations générées avec succès');
 
     profile.aiRecommendations = {
       skinRoutine: recommendations.skinRoutine,
@@ -76,25 +78,26 @@ exports.completeOnboarding = async (req, res) => {
 
     await profile.save();
 
-    // Générer les tâches personnalisées (filtrer les catégories invalides comme 'quiz')
-    const validCategories = ['skincare', 'haircare', 'routine', 'shopping', 'review', 'social'];
-    const tasksData = recommendations.recommendedTasks
-      .filter(task => validCategories.includes(task.category))
-      .map(task => ({
-        user: req.user.id,
-        type: 'onboarding',
-        category: task.category,
-        title: task.title,
-        description: task.description,
-        icon: task.icon || '✨',
-        rewards: {
-          points: task.points || 20
-        },
-        status: 'pending',
-        progress: { current: 0, target: 1 },
-        aiGenerated: true,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 jours
-      }));
+    // Générer les tâches personnalisées avec Gemini IA
+    console.log('🤖 Génération des tâches d\'intégration via Gemini IA...');
+    const generatedTasks = await aiService.generateOnboardingTasks(skinProfile, hairProfile);
+    
+    const tasksData = generatedTasks.map(task => ({
+      user: req.user.id,
+      type: 'onboarding',
+      category: task.category,
+      title: task.title,
+      description: task.description,
+      icon: task.icon || '✨',
+      rewards: {
+        points: task.points || 20,
+        discountPoints: (task.discountPoints || 0) + (task.giftPoints || 0)
+      },
+      status: 'pending',
+      progress: { current: 0, target: 1 },
+      aiGenerated: true,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 jours
+    }));
 
     // Insérer les tâches
     const tasks = await Task.insertMany(tasksData);
@@ -108,8 +111,13 @@ exports.completeOnboarding = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Erreur onboarding:', error.message);
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+    console.error('❌ Erreur onboarding:', error);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Erreur serveur', 
+      error: error.message,
+      details: error.response?.data || error.toString()
+    });
   }
 };
 

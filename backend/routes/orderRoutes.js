@@ -8,12 +8,14 @@ const {
   updateOrderStatus,
   markOrderAsPaid,
   deleteOrder,
-  getOrderItems
+  getOrderItems,
+  getAvailableDiscountPoints
 } = require('../controllers/orderController');
 
 // Routes privées (utilisateur connecté)
 router.post('/', protect, createOrder);
 router.get('/', protect, getUserOrders);
+router.get('/discount-points/available', protect, getAvailableDiscountPoints);
 router.get('/:id', protect, getOrderById);
 router.get('/:id/items', protect, getOrderItems);
 router.put('/:id/pay', protect, markOrderAsPaid);

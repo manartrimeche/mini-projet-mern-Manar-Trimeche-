@@ -1,5 +1,6 @@
 const Task = require('../models/Task');
 const Profile = require('../models/Profile');
+const aiService = require('../services/aiService');
 
 /**
  * Récupère toutes les tâches de l'utilisateur
@@ -86,6 +87,20 @@ exports.updateTaskProgress = async (req, res) => {
       if (profile) {
         profile.gamification.totalPoints += task.rewards.points;
         
+        // Ajouter points de réduction (codes promo)
+        if (task.rewards.discountPoints && task.rewards.discountPoints > 0) {
+          if (!profile.wallet) profile.wallet = { discountPoints: 0, giftPoints: 0 };
+          if (!profile.wallet.discountPoints) profile.wallet.discountPoints = 0;
+          profile.wallet.discountPoints += task.rewards.discountPoints;
+        }
+        
+        // Ajouter points cadeaux (achat produits)
+        if (task.rewards.giftPoints && task.rewards.giftPoints > 0) {
+          if (!profile.wallet) profile.wallet = { discountPoints: 0, giftPoints: 0 };
+          if (!profile.wallet.giftPoints) profile.wallet.giftPoints = 0;
+          profile.wallet.giftPoints += task.rewards.giftPoints;
+        }
+        
         // Vérifier niveau (chaque 100 points = 1 niveau)
         const newLevel = Math.floor(profile.gamification.totalPoints / 100) + 1;
         if (newLevel > profile.gamification.level) {
@@ -151,16 +166,25 @@ exports.completeTask = async (req, res) => {
     if (profile) {
       profile.gamification.totalPoints += task.rewards.points;
       
+      // Ajouter points de réduction (codes promo)
+      if (task.rewards.discountPoints && task.rewards.discountPoints > 0) {
+        if (!profile.wallet) profile.wallet = { discountPoints: 0, giftPoints: 0 };
+        if (!profile.wallet.discountPoints) profile.wallet.discountPoints = 0;
+        profile.wallet.discountPoints += task.rewards.discountPoints;
+      }
+      
+      // Ajouter points cadeaux (achat produits)
+      if (task.rewards.giftPoints && task.rewards.giftPoints > 0) {
+        if (!profile.wallet) profile.wallet = { discountPoints: 0, giftPoints: 0 };
+        if (!profile.wallet.giftPoints) profile.wallet.giftPoints = 0;
+        profile.wallet.giftPoints += task.rewards.giftPoints;
+      }
+      
       // Vérifier niveau
       const newLevel = Math.floor(profile.gamification.totalPoints / 100) + 1;
       if (newLevel > profile.gamification.level) {
         profile.gamification.level = newLevel;
         profile.gamification.badges.push(`🏆 Niveau ${newLevel}`);
-      }
-
-      // Ajouter bonus si spécifié
-      if (task.rewards.bonus) {
-        profile.gamification.totalPoints += task.rewards.bonus;
       }
 
       // Ajouter badge
@@ -188,14 +212,17 @@ exports.completeTask = async (req, res) => {
       if (allCompleted && onboardingTasks.length > 0) {
         // Bonus pour avoir tout complété
         profile.gamification.totalPoints += 100;
+        if (!profile.wallet) profile.wallet = { discountPoints: 0 };
+        profile.wallet.discountPoints += 25; // 25 points de réduction bonus
         profile.gamification.badges.push('🌟 Champion du Démarrage');
         await profile.save();
 
         return res.json({
-          message: 'Toutes les tâches d\'onboarding complétées! Bonus de 100 points 🎉🎉',
+          message: 'Toutes les tâches d\'onboarding complétées! Bonus de 100 points + 25 points réduction au panier 🎉🎉',
           task,
           totalRewards: {
-            points: task.rewards.points + (task.rewards.bonus || 0) + 100,
+            points: task.rewards.points + 100,
+            discountPoints: (task.rewards.discountPoints || 0) + 25,
             badges: [task.rewards.badge, '🌟 Champion du Démarrage'].filter(Boolean),
             level: profile.gamification.level
           }
@@ -206,7 +233,8 @@ exports.completeTask = async (req, res) => {
         message: `Tâche complétée! +${task.rewards.points} points 🎉`,
         task,
         rewards: {
-          points: task.rewards.points + (task.rewards.bonus || 0),
+          points: task.rewards.points,
+          discountPoints: task.rewards.discountPoints || 0,
           badge: task.rewards.badge,
           level: profile.gamification.level
         }
@@ -259,5 +287,40 @@ exports.cleanExpiredTasks = async (req, res) => {
   } catch (error) {
     console.error('❌ Erreur nettoyage tâches:', error.message);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+
+/**
+ * Obtient les conseils IA pour une tâche
+ */
+exports.getTaskAdvice = async (req, res) => {
+  try {
+    const task = await Task.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Tâche non trouvée' });
+    }
+
+    console.log('💡 Requête conseils pour:', task.title);
+    const advice = await aiService.generateTaskAdvice(task);
+
+    res.json({
+      success: true,
+      message: 'Conseils générés avec succès',
+      data: {
+        taskId: task._id,
+        taskTitle: task.title,
+        advice: advice
+      }
+    });
+  } catch (error) {
+    console.error('❌ Erreur génération conseils tâche:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur: ' + error.message
+    });
   }
 };

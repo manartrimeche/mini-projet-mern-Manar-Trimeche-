@@ -1,16 +1,41 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Gift } from 'lucide-react';
 
 const Cart = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const { items, updateQty, removeItem, clear, totals } = useCart();
   const [unavailableItems, setUnavailableItems] = useState([]);
+  const [pointsToUse, setPointsToUse] = useState(0);
+  const [discountPreview, setDiscountPreview] = useState(0);
+
+  // Récupérer les points de réduction disponibles
+  const { data: pointsData } = useQuery({
+    queryKey: ['discountPoints'],
+    queryFn: async () => {
+      const res = await api.get('/orders/discount-points/available');
+      return res.data.data;
+    },
+    enabled: isAuthenticated
+  });
+
+  // Calculer la réduction en temps réel
+  useEffect(() => {
+    if (pointsData && pointsToUse > 0) {
+      const maxDiscount = Math.min(
+        pointsToUse * (pointsData.discountRate || 1),
+        totals.amount
+      );
+      setDiscountPreview(maxDiscount);
+    } else {
+      setDiscountPreview(0);
+    }
+  }, [pointsToUse, pointsData, totals.amount]);
 
   // Vérifier la disponibilité des produits
   useEffect(() => {
@@ -48,13 +73,15 @@ const Cart = () => {
       const response = await api.post('/orders', {
         items: items.map(it => ({ productId: it.productId, quantity: it.quantity })),
         shippingAddress,
-        paymentMethod: 'credit_card'
+        paymentMethod: 'credit_card',
+        discountPointsToUse: pointsToUse
       });
       return response.data;
     },
     onSuccess: () => {
       clear();
-      alert('Commande passée avec succès!');
+      setPointsToUse(0);
+      alert('Commande passée avec succès! Points de réduction appliqués.');
       navigate('/orders');
     },
     onError: (err) => {
@@ -168,9 +195,89 @@ const Cart = () => {
             <span>{totals.count}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontWeight: 700 }}>
-            <span>Total</span>
+            <span>Total avant réduction</span>
             <span>{totals.amount.toFixed(2)} TND</span>
           </div>
+
+          {/* Section Points de Réduction */}
+          {isAuthenticated && pointsData && (
+            <div style={{
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: '10px',
+              padding: '12px',
+              marginBottom: '12px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <Gift size={18} style={{ color: '#10b981' }} />
+                <span style={{ fontWeight: '600', color: '#059669' }}>Points de réduction</span>
+              </div>
+              
+              <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>
+                Disponibles: <span style={{ fontWeight: '700', color: '#111827' }}>{pointsData.availablePoints} points</span>
+                {pointsData.maxDiscount > 0 && (
+                  <span style={{ marginLeft: '8px' }}>
+                    (jusqu'à {pointsData.maxDiscount.toFixed(2)} TND)
+                  </span>
+                )}
+              </div>
+
+              {pointsData.availablePoints > 0 ? (
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    min="0"
+                    max={pointsData.availablePoints}
+                    value={pointsToUse}
+                    onChange={(e) => setPointsToUse(Math.max(0, parseInt(e.target.value) || 0))}
+                    style={{
+                      flex: 1,
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid #d1d5db',
+                      fontSize: '14px'
+                    }}
+                    placeholder="Points à utiliser"
+                  />
+                  <button
+                    onClick={() => setPointsToUse(pointsData.availablePoints)}
+                    style={{
+                      padding: '6px 10px',
+                      background: '#e0f2fe',
+                      color: '#0369a1',
+                      border: '1px solid #bae6fd',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Tous les points
+                  </button>
+                </div>
+              ) : (
+                <p style={{ margin: 0, fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                  Complétez les tâches pour gagner des points de réduction!
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Réduction appliquée */}
+          {discountPreview > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#10b981', fontWeight: '600' }}>
+              <span>Réduction appliquée</span>
+              <span>-{discountPreview.toFixed(2)} TND</span>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontWeight: '700', fontSize: '16px', borderTop: '1px solid #e5e7eb', paddingTop: '8px' }}>
+            <span>Total à payer</span>
+            <span style={{ color: '#10b981' }}>
+              {(totals.amount - discountPreview).toFixed(2)} TND
+            </span>
+          </div>
+
           <button
             onClick={handleCheckout}
             disabled={createOrderMutation.isPending}

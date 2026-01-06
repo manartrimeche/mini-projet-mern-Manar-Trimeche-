@@ -58,7 +58,7 @@ Règles IMPORTANTES:
 - ÉVITER les tâches génériques comme "Testez un nouveau produit"
 - category valides: skincare, haircare, routine, shopping, review, social`;
 
-    console.log('🤖 Appel API Gemini...');
+    console.log('  Appel API Gemini...');
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
@@ -69,6 +69,21 @@ Règles IMPORTANTES:
     }
 
     const recommendations = JSON.parse(jsonMatch[0]);
+    
+    // Valider la structure de la réponse
+    if (!recommendations.skinRoutine || !Array.isArray(recommendations.skinRoutine)) {
+      throw new Error('skinRoutine manquante ou invalide dans la réponse IA');
+    }
+    if (!recommendations.hairRoutine || !Array.isArray(recommendations.hairRoutine)) {
+      throw new Error('hairRoutine manquante ou invalide dans la réponse IA');
+    }
+    if (!recommendations.recommendedTasks || !Array.isArray(recommendations.recommendedTasks)) {
+      throw new Error('recommendedTasks manquante ou invalide dans la réponse IA');
+    }
+    if (!recommendations.tips || !Array.isArray(recommendations.tips)) {
+      throw new Error('tips manquée ou invalide dans la réponse IA');
+    }
+    
     console.log('✅ Recommandations IA générées avec succès');
     return recommendations;
   } catch (error) {

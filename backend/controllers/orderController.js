@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const OrderItem = require('../models/OrderItem');
 const Product = require('../models/Product');
 const User = require('../models/User');
+const Profile = require('../models/Profile');
 
 // DESC: Créer une commande
 // ROUTE: POST /api/orders
@@ -12,7 +13,7 @@ exports.createOrder = async (req, res) => {
     console.log('Body reçu:', req.body);
     console.log('UserId:', req.userId);
     
-    const { items, shippingAddress, paymentMethod } = req.body;
+    const { items, shippingAddress, paymentMethod, discountPointsToUse } = req.body;
     const userId = req.userId; // Depuis le middleware protect
 
     // Validation
@@ -54,13 +55,49 @@ exports.createOrder = async (req, res) => {
       totalPrice += product.price * item.quantity;
     }
 
+    // Vérifier et appliquer les points de réduction
+    let discountPointsUsed = 0;
+    let discountAmount = 0;
+
+    if (discountPointsToUse && discountPointsToUse > 0) {
+      const profile = await Profile.findOne({ user: userId });
+      
+      if (!profile || !profile.wallet || profile.wallet.discountPoints < discountPointsToUse) {
+        return res.status(400).json({
+          success: false,
+          message: `Vous n\'avez pas assez de points de réduction. Disponibles: ${profile?.wallet?.discountPoints || 0}`,
+          availablePoints: profile?.wallet?.discountPoints || 0
+        });
+      }
+
+      // Conversion: 1 point = 1 TND
+      discountAmount = discountPointsToUse * 1;
+      
+      // S'assurer que la réduction ne dépasse pas le prix total
+      if (discountAmount > totalPrice) {
+        discountAmount = totalPrice;
+        discountPointsUsed = Math.floor(totalPrice / 1);
+      } else {
+        discountPointsUsed = discountPointsToUse;
+      }
+
+      // Soustraire les points du wallet de l'utilisateur
+      profile.wallet.discountPoints -= discountPointsUsed;
+      await profile.save();
+    }
+
+    // Appliquer la réduction au prix total
+    totalPrice = Math.max(0, totalPrice - discountAmount);
+
     // Créer la commande d'abord
     const order = await Order.create({
       user: userId,
       items: [],
       totalPrice,
       shippingAddress,
-      paymentMethod: paymentMethod || 'credit_card'
+      paymentMethod: paymentMethod || 'credit_card',
+      discountPointsUsed,
+      discountAmount
     });
 
     // Ensuite créer les OrderItems avec la référence à la commande
@@ -328,6 +365,43 @@ exports.getOrderItems = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des articles',
+      error: error.message
+    });
+  }
+};
+
+// DESC: Récupérer les points de réduction disponibles
+// ROUTE: GET /api/orders/discount-points
+// ACCESS: Private
+exports.getAvailableDiscountPoints = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const profile = await Profile.findOne({ user: userId });
+
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Profil utilisateur non trouvé'
+      });
+    }
+
+    const availablePoints = profile.wallet?.discountPoints || 0;
+    const discountRate = 1; // 1 point = 1 TND
+    const maxDiscount = availablePoints * discountRate;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        availablePoints,
+        discountRate,
+        maxDiscount: parseFloat(maxDiscount.toFixed(2))
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des points',
       error: error.message
     });
   }

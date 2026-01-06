@@ -47,6 +47,8 @@ const AIChatbot = () => {
         context: 'Boutique cosmétique en ligne'
       });
 
+      console.log('✅ Réponse API:', response.data);
+
       if (!response.data.success || !response.data.data.response) {
         throw new Error(response.data.message || 'Erreur API');
       }
@@ -60,7 +62,12 @@ const AIChatbot = () => {
 
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
-      console.error('Erreur chatbot:', error);
+      console.error('❌ Erreur chatbot:', error);
+      console.error('Détails:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
       const errorMessage = {
         id: messages.length + 2,
         text: `❌ ${error.response?.data?.message || error.message || 'Service indisponible. Vérifiez que la clé API est configurée.'}`,

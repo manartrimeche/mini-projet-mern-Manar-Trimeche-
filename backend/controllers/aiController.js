@@ -34,10 +34,12 @@ exports.generateDescription = async (req, res) => {
       data: { description }
     });
   } catch (error) {
-    console.error('❌ Erreur génération:', error.message);
+    console.error('❌ Erreur génération:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Erreur: ' + error.message
+      message: 'Erreur: ' + error.message,
+      details: process.env.NODE_ENV === 'development' ? error.toString() : undefined
     });
   }
 };
@@ -64,9 +66,12 @@ exports.analyzeSentiment = async (req, res) => {
       data: analysis
     });
   } catch (error) {
+    console.error('❌ Erreur analyse sentiment:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Erreur: ' + error.message,
+      details: process.env.NODE_ENV === 'development' ? error.toString() : undefined
     });
   }
 };
@@ -101,10 +106,12 @@ exports.getReviewsSummary = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Erreur résumé avis:', error.message);
+    console.error('❌ Erreur résumé avis:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Erreur: ' + error.message
+      message: 'Erreur: ' + error.message,
+      details: process.env.NODE_ENV === 'development' ? error.toString() : undefined
     });
   }
 };
@@ -147,9 +154,12 @@ exports.getRecommendations = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('❌ Erreur recommandations:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Erreur: ' + error.message,
+      details: process.env.NODE_ENV === 'development' ? error.toString() : undefined
     });
   }
 };
@@ -187,10 +197,13 @@ exports.getSupport = async (req, res) => {
       data: { response }
     });
   } catch (error) {
-    console.error('❌ Erreur support IA:', error.message);
+    console.error('❌ Erreur support IA:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Service IA temporairement indisponible. ' + error.message
+      message: 'Service IA temporairement indisponible.',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.toString() : undefined
     });
   }
 };

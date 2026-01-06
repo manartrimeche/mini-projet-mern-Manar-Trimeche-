@@ -20,6 +20,16 @@ const orderSchema = new mongoose.Schema(
       required: true,
       min: 0
     },
+    discountPointsUsed: {
+      type: Number,
+      default: 0,
+      description: 'Points de réduction utilisés pour cette commande'
+    },
+    discountAmount: {
+      type: Number,
+      default: 0,
+      description: 'Montant de la réduction appliquée'
+    },
     status: {
       type: String,
       enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
