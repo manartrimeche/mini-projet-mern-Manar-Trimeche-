@@ -900,13 +900,4 @@ rm -rf node_modules/.vite
 - [TanStack Query](https://tanstack.com/query/)
 - [Axios](https://axios-http.com/)
 
-## 📞 Support
 
-Pour toute question :
-- Consultez la documentation complète
-- Ouvrez une issue sur GitHub
-- Contactez l'équipe de développement
-
----
-
-**Développé avec ⚛️ React et ❤️**
