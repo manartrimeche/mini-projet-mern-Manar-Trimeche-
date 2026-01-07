@@ -568,12 +568,5 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 - Google pour l'API Gemini AI
 - La communauté open source
 
-## 📞 Support
 
-Pour toute question ou problème :
-- Ouvrez une issue sur GitHub
-- Envoyez un email à : support@cosmetics-ecommerce.com
 
----
-
-Développé avec ❤️ par Manar Trimeche
