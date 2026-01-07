@@ -48,28 +48,30 @@ exports.register = async (req, res) => {
 
     // Créer l'utilisateur
     // Le mot de passe est hashé automatiquement par le middleware pre('save')
-    const user = await User.create({
+    const user = new User({
       username,
       email,
       password
     });
 
-    // Créer un profil vide pour cet utilisateur (relation 1-to-1)
-    const profile = await Profile.create({
+    // Sauvegarder l'utilisateur
+    await user.save();
+
+    // Créer un profil pour cet utilisateur
+    const profile = new Profile({
       user: user._id
     });
+
+    // Sauvegarder le profil
+    await profile.save();
 
     // Mettre à jour l'utilisateur avec la référence au profil
     user.profile = profile._id;
     await user.save();
 
-    // Générer le token JWT
-    const token = generateToken(user._id);
-
     res.status(201).json({
       success: true,
-      message: '✅ Utilisateur créé avec succès',
-      token,
+      message: '✅ Utilisateur créé avec succès. Veuillez vous connecter.',
       user: {
         id: user._id,
         username: user.username,
@@ -77,6 +79,7 @@ exports.register = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Erreur enregistrement:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de l\'enregistrement',

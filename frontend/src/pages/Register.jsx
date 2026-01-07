@@ -32,7 +32,7 @@ const Register = () => {
 
     try {
       await register(formData);
-      navigate('/products');
+      navigate('/login');
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur d\'inscription');
     }
